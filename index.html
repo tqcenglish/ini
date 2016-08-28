@@ -27,8 +27,6 @@
 
 <p>Package ini provides INI file read and write functionality in Go.</p>
 
-<p><a href="README_ZH.md">简体中文</a></p>
-
 <h2>
 <a id="feature" class="anchor" href="#feature" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Feature</h2>
 
@@ -76,7 +74,7 @@
 <h3>
 <a id="loading-from-data-sources" class="anchor" href="#loading-from-data-sources" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Loading from data sources</h3>
 
-<p>A <strong>Data Source</strong> is either raw data in type <code>[]byte</code> or a file name with type <code>string</code> and you can load <strong>as many as</strong> data sources you want. Passing other types will simply return an error.</p>
+<p>A <strong>Data Source</strong> is either raw data in type <code>[]byte</code> or a file name with type <code>string</code> and you can load <strong>as many data sources as you want</strong>. Passing other types will simply return an error.</p>
 
 <div class="highlight highlight-source-go"><pre><span class="pl-smi">cfg</span>, <span class="pl-smi">err</span> <span class="pl-k">:=</span> ini.<span class="pl-c1">Load</span>([]<span class="pl-k">byte</span>(<span class="pl-s"><span class="pl-pds">"</span>raw data<span class="pl-pds">"</span></span>), <span class="pl-s"><span class="pl-pds">"</span>filename<span class="pl-pds">"</span></span>)</pre></div>
 
@@ -84,13 +82,18 @@
 
 <div class="highlight highlight-source-go"><pre><span class="pl-smi">cfg</span> <span class="pl-k">:=</span> ini.<span class="pl-c1">Empty</span>()</pre></div>
 
-<p>When you cannot decide how many data sources to load at the beginning, you still able to <strong>Append()</strong> them later.</p>
+<p>When you cannot decide how many data sources to load at the beginning, you will still be able to <strong>Append()</strong> them later.</p>
 
 <div class="highlight highlight-source-go"><pre><span class="pl-smi">err</span> <span class="pl-k">:=</span> cfg.<span class="pl-c1">Append</span>(<span class="pl-s"><span class="pl-pds">"</span>other file<span class="pl-pds">"</span></span>, []<span class="pl-k">byte</span>(<span class="pl-s"><span class="pl-pds">"</span>other raw data<span class="pl-pds">"</span></span>))</pre></div>
 
 <p>If you have a list of files with possibilities that some of them may not available at the time, and you don't know exactly which ones, you can use <code>LooseLoad</code> to ignore nonexistent files without returning error.</p>
 
 <div class="highlight highlight-source-go"><pre><span class="pl-smi">cfg</span>, <span class="pl-smi">err</span> <span class="pl-k">:=</span> ini.<span class="pl-c1">LooseLoad</span>(<span class="pl-s"><span class="pl-pds">"</span>filename<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>filename_404<span class="pl-pds">"</span></span>)</pre></div>
+
+<p>The cool thing is, whenever the file is available to load while you're calling <code>Reload</code> method, it will be counted as usual.</p>
+
+<h4>
+<a id="ignore-cases-of-key-name" class="anchor" href="#ignore-cases-of-key-name" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Ignore cases of key name</h4>
 
 <p>When you do not care about cases of section and key names, you can use <code>InsensitiveLoad</code> to force all names to be lowercased while parsing.</p>
 
@@ -105,9 +108,21 @@
 <span class="pl-smi">key1</span>, <span class="pl-smi">err</span> <span class="pl-k">:=</span> cfg.<span class="pl-c1">GetKey</span>(<span class="pl-s"><span class="pl-pds">"</span>Key<span class="pl-pds">"</span></span>)
 <span class="pl-smi">key2</span>, <span class="pl-smi">err</span> <span class="pl-k">:=</span> cfg.<span class="pl-c1">GetKey</span>(<span class="pl-s"><span class="pl-pds">"</span>KeY<span class="pl-pds">"</span></span>)</pre></div>
 
-<p>If you want to give more advanced load options, use <code>LoadSources</code> and take a look at <a href="https://github.com/go-ini/ini/blob/v1.16.1/ini.go#L156"><code>LoadOptions</code></a>.</p>
+<h4>
+<a id="mysql-like-boolean-key" class="anchor" href="#mysql-like-boolean-key" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>MySQL-like boolean key</h4>
 
-<p>The cool thing is, whenever the file is available to load while you're calling <code>Reload</code> method, it will be counted as usual.</p>
+<p>MySQL's configuration allows a key without value as follows:</p>
+
+<div class="highlight highlight-source-ini"><pre><span class="pl-en">[mysqld]</span>
+...
+skip-host-cache
+skip-name-resolve</pre></div>
+
+<p>By default, this is considered as missing value. But if you know you're going to deal with those cases, you can assign advanced load options:</p>
+
+<div class="highlight highlight-source-go"><pre><span class="pl-smi">cfg</span>, <span class="pl-smi">err</span> <span class="pl-k">:=</span> <span class="pl-c1">LoadSources</span>(LoadOptions{AllowBooleanKeys: <span class="pl-c1">true</span>}, <span class="pl-s"><span class="pl-pds">"</span>my.cnf<span class="pl-pds">"</span></span>))</pre></div>
+
+<p>The value of those keys are always <code>true</code>, and when you save to a file, it will keep in the same foramt as you read.</p>
 
 <h3>
 <a id="working-with-sections" class="anchor" href="#working-with-sections" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Working with sections</h3>
@@ -255,6 +270,14 @@ v = cfg.<span class="pl-c1">Section</span>(<span class="pl-s"><span class="pl-pd
 
 <div class="highlight highlight-source-go"><pre>cfg.<span class="pl-c1">Section</span>(<span class="pl-s"><span class="pl-pds">"</span>advance<span class="pl-pds">"</span></span>).<span class="pl-c1">Key</span>(<span class="pl-s"><span class="pl-pds">"</span>two_lines<span class="pl-pds">"</span></span>).<span class="pl-c1">String</span>() <span class="pl-c">// how about continuation lines?</span>
 cfg.<span class="pl-c1">Section</span>(<span class="pl-s"><span class="pl-pds">"</span>advance<span class="pl-pds">"</span></span>).<span class="pl-c1">Key</span>(<span class="pl-s"><span class="pl-pds">"</span>lots_of_lines<span class="pl-pds">"</span></span>).<span class="pl-c1">String</span>() <span class="pl-c">// 1 2 3 4</span></pre></div>
+
+<p>Well, I hate continuation lines, how do I disable that?</p>
+
+<div class="highlight highlight-source-go"><pre><span class="pl-smi">cfg</span>, <span class="pl-smi">err</span> <span class="pl-k">:=</span> ini.<span class="pl-c1">LoadSources</span>(ini.<span class="pl-smi">LoadOptions</span>{
+    <span class="pl-v">IgnoreContinuation</span>: <span class="pl-c1">true</span>,
+}, <span class="pl-s"><span class="pl-pds">"</span>filename<span class="pl-pds">"</span></span>)</pre></div>
+
+<p>Holy crap! </p>
 
 <p>Note that single quotes around values will be stripped:</p>
 
@@ -460,8 +483,8 @@ cfg.<span class="pl-c1">Section</span>(<span class="pl-s"><span class="pl-pds">"
 
 <div class="highlight highlight-source-go"><pre><span class="pl-k">type</span> <span class="pl-v">Embeded</span> <span class="pl-k">struct</span> {
     <span class="pl-v">Dates</span>  []time.<span class="pl-smi">Time</span> <span class="pl-s"><span class="pl-pds">`</span>delim:"|"<span class="pl-pds">`</span></span>
-    <span class="pl-v">Places</span> []<span class="pl-k">string</span>
-    <span class="pl-v">None</span>   []<span class="pl-k">int</span>
+    <span class="pl-v">Places</span> []<span class="pl-k">string</span>    <span class="pl-s"><span class="pl-pds">`</span>ini:"places,omitempty"<span class="pl-pds">`</span></span>
+    <span class="pl-v">None</span>   []<span class="pl-k">int</span>       <span class="pl-s"><span class="pl-pds">`</span>ini:",omitempty"<span class="pl-pds">`</span></span>
 }
 
 <span class="pl-k">type</span> <span class="pl-v">Author</span> <span class="pl-k">struct</span> {
@@ -494,8 +517,7 @@ cfg.<span class="pl-c1">Section</span>(<span class="pl-s"><span class="pl-pds">"
 
 <span class="pl-en">[Embeded]</span>
 <span class="pl-k">Dates</span> = 2015-08-07T22:14:22+08:00|2015-08-07T22:14:22+08:00
-<span class="pl-k">Places</span> = HangZhou,Boston
-<span class="pl-k">None</span> =</pre></div>
+<span class="pl-k">places</span> = HangZhou,Boston</pre></div>
 
 <h4>
 <a id="name-mapper" class="anchor" href="#name-mapper" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Name Mapper</h4>
@@ -530,6 +552,25 @@ cfg.<span class="pl-c1">Section</span>(<span class="pl-s"><span class="pl-pds">"
 }</pre></div>
 
 <p>Same rules of name mapper apply to <code>ini.ReflectFromWithMapper</code> function.</p>
+
+<h4>
+<a id="value-mapper" class="anchor" href="#value-mapper" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Value Mapper</h4>
+
+<p>To expand values (e.g. from environment variables), you can use the <code>ValueMapper</code> to transform values:</p>
+
+<div class="highlight highlight-source-go"><pre><span class="pl-k">type</span> <span class="pl-v">Env</span> <span class="pl-k">struct</span> {
+    <span class="pl-v">Foo</span> <span class="pl-k">string</span> <span class="pl-s"><span class="pl-pds">`</span>ini:"foo"<span class="pl-pds">`</span></span>
+}
+
+<span class="pl-k">func</span> <span class="pl-en">main</span>() {
+    <span class="pl-smi">cfg</span>, <span class="pl-smi">err</span> <span class="pl-k">:=</span> ini.<span class="pl-c1">Load</span>([]<span class="pl-k">byte</span>(<span class="pl-s"><span class="pl-pds">"</span>[env]<span class="pl-cce">\n</span>foo = ${MY_VAR}<span class="pl-cce">\n</span><span class="pl-pds">"</span></span>)
+    cfg.<span class="pl-smi">ValueMapper</span> = os.<span class="pl-smi">ExpandEnv</span>
+    <span class="pl-c">// ...</span>
+    <span class="pl-smi">env</span> <span class="pl-k">:=</span> &amp;Env{}
+    err = cfg.<span class="pl-c1">Section</span>(<span class="pl-s"><span class="pl-pds">"</span>env<span class="pl-pds">"</span></span>).<span class="pl-c1">MapTo</span>(env)
+}</pre></div>
+
+<p>This would set the value of <code>env.Foo</code> to the value of the environment variable <code>MY_VAR</code>.</p>
 
 <h4>
 <a id="other-notes-on-mapreflect" class="anchor" href="#other-notes-on-mapreflect" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Other Notes On Map/Reflect</h4>
