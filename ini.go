@@ -376,8 +376,20 @@ func (f *File) WriteToIndent(w io.Writer, indent string) (n int64, err error) {
 		}
 
 		if i > 0 || DefaultHeader {
-			if _, err = buf.WriteString("[" + sname + "]" + LineBreak); err != nil {
-				return 0, err
+			// ADD tqcenglish: 对分区名后添加模版名(父分区)
+			// https://wiki.asterisk.org/wiki/display/AST/Using+Templates
+			if sec.HasKey("templateName") {
+				templateName, _ := sec.GetKey("templateName")
+				if _, err = buf.WriteString("[" + sname + "](" + templateName.String() + ")" + LineBreak); err != nil {
+					return 0, err
+				}
+
+				// 删除 templateName 键
+				sec.DeleteKey("templateName")
+			} else {
+				if _, err = buf.WriteString("[" + sname + "]" + LineBreak); err != nil {
+					return 0, err
+				}
 			}
 		} else {
 			// Write nothing if default section is empty

@@ -240,7 +240,6 @@ func (f *File) parse(reader io.Reader) (err error) {
 		if err != nil {
 			return err
 		}
-
 		line = bytes.TrimLeftFunc(line, unicode.IsSpace)
 		if len(line) == 0 {
 			continue
@@ -259,6 +258,7 @@ func (f *File) parse(reader io.Reader) (err error) {
 		if line[0] == '[' {
 			// Read to the next ']' (TODO: support quoted strings)
 			// TODO(unknwon): use LastIndexByte when stop supporting Go1.4
+
 			closeIdx := bytes.LastIndex(line, []byte("]"))
 			if closeIdx == -1 {
 				return fmt.Errorf("unclosed section: %s", line)
@@ -268,6 +268,16 @@ func (f *File) parse(reader io.Reader) (err error) {
 			section, err = f.NewSection(name)
 			if err != nil {
 				return err
+			}
+
+			// ADD tqcenglish: 将分区行的模版(相当于父分区)名作为键值保存
+			// https://wiki.asterisk.org/wiki/display/AST/Using+Templates
+			templateStart := bytes.Index(line, []byte("("))
+			templateEnd := bytes.Index(line, []byte(")"))
+			// 不存在模版时 templateEnd = templateStart = 1
+			if templateEnd > templateStart+1 {
+				templateName := line[templateStart+1 : templateEnd]
+				section.NewKey("templateName", string(templateName))
 			}
 
 			comment, has := cleanComment(line[closeIdx+1:])
